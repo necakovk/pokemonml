@@ -112,33 +112,28 @@ class MoveRobot(Node):
         print("⛔ Turn complete.\n")
 
     def read_distance(self):
-        """ Get a stable distance reading using multiple samples. """
-        num_samples = 5
-        distances = []
+        """ Get a single distance reading from the ultrasonic sensor. """
+        GPIO.output(TRIG_PIN, True)
+        time.sleep(0.00001)  # Send a short pulse
+        GPIO.output(TRIG_PIN, False)
 
-        for _ in range(num_samples):
-            GPIO.output(TRIG_PIN, True)
-            time.sleep(0.00001)
-            GPIO.output(TRIG_PIN, False)
+        start_time, end_time = 0, 0
 
-            start_time, end_time = 0, 0
+        # Wait for echo response
+        while GPIO.input(ECHO_PIN) == 0:
+            start_time = time.time()
 
-            while GPIO.input(ECHO_PIN) == 0:
-                start_time = time.time()
+        while GPIO.input(ECHO_PIN) == 1:
+            end_time = time.time()
 
-            while GPIO.input(ECHO_PIN) == 1:
-                end_time = time.time()
+        # Calculate distance
+        duration = end_time - start_time
+        distance_cm = (duration * 34300) / 2  # Convert to cm
+        distance_in = distance_cm / 2.54  # Convert to inches
 
-            duration = end_time - start_time
-            distance_cm = (duration * 34300) / 2  # Convert to cm
-            distance_in = distance_cm / 2.54  # Convert to inches
-            distances.append(distance_in)
+        print(f"📏 Distance: {distance_in:.2f} inches")
+        return distance_in
 
-            time.sleep(0.02)  # Small delay between readings
-
-        avg_distance = sum(distances) / len(distances)
-        print(f"📏 Distance: {avg_distance:.2f} inches (Avg of {num_samples} readings)")
-        return avg_distance
 
     def capture_and_classify_image(self):
         """ Captures an image and classifies it using the trained model. """
