@@ -1,5 +1,6 @@
-0 Squirtle
-1 Bulbasaur
-2 Charmander
-3 Snorlax
+0 Bulbasaur
+1 Squirtle
+2 Snorlax
+3 Charmander
 4 Pokeball
+5 Pikachu
