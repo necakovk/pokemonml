@@ -167,7 +167,7 @@ def main():
             distance = node.read_distance()
             print(f"📏 Current Distance: {distance:.2f} inches")  # Debugging
 
-            if distance <= 7.0:  # Stop when an object is detected
+            if distance <= 12.0:  # Stop when an object is detected
                 print("\n🛑 Object detected. Stopping movement.")
                 node.stop()
 
