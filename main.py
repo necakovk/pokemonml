@@ -97,7 +97,7 @@ class MoveRobot(Node):
     def turn(self, direction):
         """ Turns the robot precisely 90 degrees using calibrated values. """
         velocity = Twist()
-        velocity.angular.z = TURN_SPEED if direction == "right" else -TURN_SPEED
+        velocity.angular.z = -TURN_SPEED if direction == "right" else TURN_SPEED
 
         print(f"\n🔄 Turning {direction} at speed {TURN_SPEED} for {TURN_DURATION} seconds...\n")
 
