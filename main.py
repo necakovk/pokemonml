@@ -79,14 +79,12 @@ class MoveRobot(Node):
                 print("⚠ Invalid input! Enter 'go' or 'exit'.")
 
     def move_forward(self):
-        """ Publishes forward movement once, allowing the main loop to handle continuous movement. """
+        """ Publishes forward movement continuously. """
         velocity = Twist()
         velocity.linear.x = 0.2  # Adjust speed as needed
         velocity.angular.z = 0.0
         self.publisher.publish(velocity)
         print("▶ Moving forward...")
-
-
 
     def stop(self):
         """ Stop the robot. """
@@ -114,25 +112,33 @@ class MoveRobot(Node):
         print("⛔ Turn complete.\n")
 
     def read_distance(self):
-        """ Get the distance from the ultrasonic sensor and print it. """
-        GPIO.output(TRIG_PIN, True)
-        time.sleep(0.00001)
-        GPIO.output(TRIG_PIN, False)
+        """ Get a stable distance reading using multiple samples. """
+        num_samples = 5
+        distances = []
 
-        start_time, end_time = 0, 0
+        for _ in range(num_samples):
+            GPIO.output(TRIG_PIN, True)
+            time.sleep(0.00001)
+            GPIO.output(TRIG_PIN, False)
 
-        while GPIO.input(ECHO_PIN) == 0:
-            start_time = time.time()
+            start_time, end_time = 0, 0
 
-        while GPIO.input(ECHO_PIN) == 1:
-            end_time = time.time()
+            while GPIO.input(ECHO_PIN) == 0:
+                start_time = time.time()
 
-        duration = end_time - start_time
-        distance_cm = (duration * 34300) / 2  # Convert to cm
-        distance_in = distance_cm / 2.54  # Convert to inches
+            while GPIO.input(ECHO_PIN) == 1:
+                end_time = time.time()
 
-        print(f"📏 Distance: {distance_in:.2f} inches")
-        return distance_in
+            duration = end_time - start_time
+            distance_cm = (duration * 34300) / 2  # Convert to cm
+            distance_in = distance_cm / 2.54  # Convert to inches
+            distances.append(distance_in)
+
+            time.sleep(0.02)  # Small delay between readings
+
+        avg_distance = sum(distances) / len(distances)
+        print(f"📏 Distance: {avg_distance:.2f} inches (Avg of {num_samples} readings)")
+        return avg_distance
 
     def capture_and_classify_image(self):
         """ Captures an image and classifies it using the trained model. """
@@ -160,9 +166,9 @@ def main():
     node = MoveRobot()
 
     try:
-        node.move_forward()  # Start moving forward once
-
         while rclpy.ok():
+            node.move_forward()  # Continuously issue forward movement
+
             distance = node.read_distance()
             print(f"📏 Current Distance: {distance:.2f} inches")  # Debugging
 
@@ -178,7 +184,6 @@ def main():
 
                 node.turn(turn_direction)
                 time.sleep(2)  # Give time to complete turn
-                node.move_forward()  # Resume moving forward
 
             time.sleep(0.1)  # Avoid excessive CPU usage
     except KeyboardInterrupt:
@@ -189,7 +194,6 @@ def main():
         node.destroy_node()
         rclpy.shutdown()
         print("✅ Robot safely shut down.")
-
 
 if __name__ == '__main__':
     main()
